@@ -1,5 +1,5 @@
-#ifndef mqtt_client_h
-#define mqtt_client_h
+#ifndef MQTTCLIENT_H
+#define MQTTCLIENT_H
 
 #include "config.h"
 #include "debug.h"

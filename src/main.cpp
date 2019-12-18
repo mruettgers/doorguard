@@ -1,10 +1,10 @@
 #include "config.h"
 #include "debug.h"
-#include "mqtt_client.h"
+#include "MqttClient.h"
 #include <IotWebConf.h>
 #include "EEPROM.h"
 #include <ESP8266WiFi.h>
-#include "door_opener.h"
+#include "DoorOpener.h"
 
 void wifiConnected();
 void configSaved();

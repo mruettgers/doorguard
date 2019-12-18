@@ -13,12 +13,6 @@
 // IMPORTANT: Before changing this compiler switch, please execute the RESTORE command on all personalized cards!
 #define USE_AES false
 
-// This define should normally be false
-// If this is true you can use Classic cards / keyfobs additionally to Desfire cards.
-// This means that the code is compiled for Defire cards, but when a Classic card is detected it will also work.
-// This mode is not recommended because Classic cards do not offer the same security as Desfire cards.
-#define ALLOW_ALSO_CLASSIC true
-
 // This password will be required when entering via Terminal
 // If you define an empty string here, no password is requested.
 // If any unauthorized person may access the dooropener hardware phyically you should provide a password!
@@ -48,7 +42,7 @@
 // The interval in milliseconds that the relay is powered which opens the door
 #define OPEN_INTERVAL 3000
 
-#define OPEN_INVERT true
+#define OPEN_INVERT false
 
 // This is the interval that the RF field is switched off to save battery.
 // The shorter this interval, the more power is consumed by the PN532.
@@ -57,6 +51,7 @@
 // Please note that the slowness of reading a Desfire card is not caused by this interval.
 // The SPI bus speed is throttled to 10 kHz, which allows to transmit the data over a long cable,
 // but this obviously makes reading the card slower.
+// #define RF_OFF_INTERVAL 1000
 #define RF_OFF_INTERVAL 200
 
 #if USE_AES
@@ -70,7 +65,7 @@
 #include "Desfire.h"
 #include "Secrets.h"
 #include "Buffer.h"
-#include "user_manager.h"
+#include "UserManager.h"
 
 // The tick counter starts at zero when the CPU is reset.
 // This interval is added to the 64 bit tick count to get a value that does not start at zero,
@@ -115,6 +110,8 @@ public:
         InitReader(false);
 
         gi_PiccMasterKey.SetKeyData(SECRET_PICC_MASTER_KEY, sizeof(SECRET_PICC_MASTER_KEY), CARD_KEY_VERSION);
+
+        UserManager::InitDatabase();
     }
 
     void loop()
@@ -202,7 +199,6 @@ private:
     bool gb_InitSuccess = false;  // true if the PN532 has been initialized successfully
     Desfire gi_PN532; // The class instance that communicates with Mifare Desfire cards
     DESFIRE_KEY_TYPE gi_PiccMasterKey;
-    UserManager userManager;
 
     // Reset the PN532 chip and initialize, set gb_InitSuccess = true on success
     // If b_ShowError == true -> flash the red LED very slowly
@@ -413,7 +409,7 @@ private:
 
             if (Utils::stricmp(gs8_CommandBuffer, "LIST") == 0)
             {
-                userManager.ListAllUsers();
+                UserManager::ListAllUsers();
                 return;
             }
 
@@ -454,7 +450,7 @@ private:
                 if (!ParseParameter(gs8_CommandBuffer + 3, &s8_Parameter, 3, NAME_BUF_SIZE - 1))
                     return;
 
-                if (!userManager.DeleteUser(0, s8_Parameter))
+                if (!UserManager::DeleteUser(s8_Parameter))
                     Utils::Print("Error: User not found.\r\n");
 
                 return;
@@ -465,7 +461,7 @@ private:
                 if (!ParseParameter(gs8_CommandBuffer + 6, &s8_Parameter, 3, NAME_BUF_SIZE - 1))
                     return;
 
-                if (!userManager.SetUserFlags(s8_Parameter, DOOR_BOTH))
+                if (!UserManager::SetUserFlags(s8_Parameter, DOOR_BOTH))
                     Utils::Print("Error: User not found.\r\n");
 
                 return;
@@ -475,7 +471,7 @@ private:
                 if (!ParseParameter(gs8_CommandBuffer + 5, &s8_Parameter, 3, NAME_BUF_SIZE - 1))
                     return;
 
-                if (!userManager.SetUserFlags(s8_Parameter, DOOR_ONE))
+                if (!UserManager::SetUserFlags(s8_Parameter, DOOR_ONE))
                     Utils::Print("Error: User not found.\r\n");
 
                 return;
@@ -485,7 +481,7 @@ private:
                 if (!ParseParameter(gs8_CommandBuffer + 5, &s8_Parameter, 3, NAME_BUF_SIZE - 1))
                     return;
 
-                if (!userManager.SetUserFlags(s8_Parameter, DOOR_TWO))
+                if (!UserManager::SetUserFlags(s8_Parameter, DOOR_TWO))
                     Utils::Print("Error: User not found.\r\n");
 
                 return;
@@ -525,9 +521,6 @@ private:
         Utils::Print("Compiled for Desfire EV1 cards (AES - 128 bit encryption used)\r\n");
 #else
         Utils::Print("Compiled for Desfire EV1 cards (3K3DES - 168 bit encryption used)\r\n");
-#endif
-#if ALLOW_ALSO_CLASSIC
-        Utils::Print("Classic cards are also allowed.\r\n");
 #endif
 
         Utils::Print("Terminal access is password protected: ");
@@ -601,7 +594,7 @@ private:
         // Utils::PrintHexBuf((byte*)k_User.s8_Name, NAME_BUF_SIZE, LF);
 
         kUser k_Found;
-        if (userManager.FindUser(k_User.ID.u64, &k_Found))
+        if (UserManager::FindUser(k_User.ID.u64, &k_Found))
         {
             Utils::Print("This card has already been stored for user ");
             Utils::Print(k_Found.s8_Name, LF);
@@ -610,10 +603,8 @@ private:
 
         if ((k_Card.e_CardType & CARD_Desfire) == 0) // Classic
         {
-#if !ALLOW_ALSO_CLASSIC
             Utils::Print("The card is not a Desfire card.\r\n");
             return;
-#endif
         }
         else // Desfire
         {
@@ -635,7 +626,7 @@ private:
         // By default a new user can open door one
         k_User.u8_Flags = DOOR_ONE;
 
-        userManager.StoreNewUser(&k_User);
+        UserManager::StoreNewUser(&k_User);
     }
 
     void Clear()
@@ -645,7 +636,7 @@ private:
         if (!WaitForKeyYesNo())
             return;
 
-        userManager.DeleteAllUsers();
+        UserManager::DeleteAllUsers();
         Utils::Print("All cards have been deleted.\r\n");
     }
 
@@ -754,7 +745,7 @@ private:
     void OpenDoor(uint64_t u64_ID, kCard *pk_Card, uint64_t u64_StartTick)
     {
         kUser k_User;
-        if (!userManager.FindUser(u64_ID, &k_User))
+        if (!UserManager::FindUser(u64_ID, &k_User))
         {
             Utils::Print("Unknown person tries to open the door: ");
             Utils::PrintHexBuf((byte *)&u64_ID, 7, LF);
@@ -764,11 +755,9 @@ private:
 
         if ((pk_Card->e_CardType & CARD_Desfire) == 0) // Classic
         {
-#if !ALLOW_ALSO_CLASSIC
             Utils::Print("The card is not a Desfire card.\r\n");
             FlashLED(LED_RED, 1000);
             return;
-#endif
         }
         else // Desfire
         {
@@ -1048,7 +1037,7 @@ private:
         if (!WaitForCard(&k_User, &k_Card))
             return false;
 
-        userManager.DeleteUser(k_User.ID.u64, NULL);
+        UserManager::DeleteUser(k_User.ID.u64);
 
         if ((k_Card.e_CardType & CARD_Desfire) == 0)
         {
