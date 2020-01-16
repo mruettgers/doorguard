@@ -25,7 +25,9 @@
 #define DOOR_1_PIN D1
 
 // This Arduino / Teensy pin is connected to the optional relay that opens the door 2
-#define DOOR_2_PIN D2
+#define DOOR_2_PIN D0
+
+#define BUZZER_PIN D2
 
 // This Arduino / Teensy pin is connected to the PN532 RSTPDN pin (reset the PN532)
 // When a communication error with the PN532 is detected the board is reset automatically.
@@ -66,11 +68,18 @@
 #include "Secrets.h"
 #include "Buffer.h"
 #include "UserManager.h"
+#include "debug.h"
 
 // The tick counter starts at zero when the CPU is reset.
 // This interval is added to the 64 bit tick count to get a value that does not start at zero,
 // because gu64_LastPasswd is initialized with 0 and must always be in the past.
 #define PASSWORD_OFFSET_MS (2 * PASSWORD_TIMEOUT * 60 * 1000)
+
+enum BeepType {
+    BEEP_INIT,
+    BEEP_OK,
+    BEEP_ERROR
+};
 
 enum eLED
 {
@@ -239,6 +248,9 @@ private:
                 break;
 
             gb_InitSuccess = true;
+            Beep(BEEP_INIT);
+
+
         } while (false);
 
         if (b_ShowError)
@@ -246,6 +258,43 @@ private:
             Utils::DelayMilli(2000); // a long interval to make the LED flash very slowly
             SetLED(LED_OFF);
             Utils::DelayMilli(100);
+        }
+    }
+
+    void Beep(BeepType type) {
+        //FIXME: Change implementation to be non-blocking using millis()
+        //FIXME: Make code a bit more pretty and readable
+        switch(type) {
+            case BEEP_INIT:
+                    DEBUG("Beeping INIT...");
+                    tone(BUZZER_PIN, 3000);
+                    delay(200);
+                    noTone(BUZZER_PIN);
+                    break;
+
+            case BEEP_OK:
+                    DEBUG("Beeping OK...");
+                    tone(BUZZER_PIN, 2000);
+                    delay(70);
+                    noTone(BUZZER_PIN);
+                    delay(30);
+                    tone(BUZZER_PIN, 3000);
+                    delay(150);
+                    noTone(BUZZER_PIN);
+                    break;
+
+            case BEEP_ERROR:
+                    DEBUG("Beeping ERROR...");
+                    tone(BUZZER_PIN, 2000);
+                    delay(70);
+                    noTone(BUZZER_PIN);
+                    delay(30);
+                    tone(BUZZER_PIN, 1000);
+                    delay(200);
+                    noTone(BUZZER_PIN);
+                    break;
+            
+            default: DEBUG("Beep() was called with an unknown type.");
         }
     }
 
@@ -387,6 +436,7 @@ private:
             if (gb_InitSuccess)
             {
                 Utils::Print("PN532 initialized successfully\r\n"); // The chip has reponded (ACK) as expected
+                Beep(BEEP_INIT);
                 return;
             }
         }
@@ -750,6 +800,7 @@ private:
             Utils::Print("Unknown person tries to open the door: ");
             Utils::PrintHexBuf((byte *)&u64_ID, 7, LF);
             FlashLED(LED_RED, 1000);
+            Beep(BEEP_ERROR);
             return;
         }
 
@@ -827,7 +878,9 @@ private:
             break;
         }
 
+        Beep(BEEP_OK);
         ActivateRelais(k_User.u8_Flags);
+
 
         // Avoid that the door is opened twice when the card is in the RF field for a longer time.
         gu64_LastID = u64_ID;
