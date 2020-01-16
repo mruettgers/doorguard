@@ -1,13 +1,14 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "FormattingSerialDebug.h"
-
 #ifdef DEBUG
 #define SERIAL_DEBUG true
 #else
 #define SERIAL_DEBUG false
 #endif
+
+#include "FormattingSerialDebug.h"
+
 
 void DEBUG_DUMP_BUFFER(byte *buf, int size)
 {
