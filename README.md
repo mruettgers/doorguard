@@ -30,7 +30,7 @@ TBD.
 
 Unordered list of features that should make it into the v1.0
 
-* [ ] **Documentation**
+* [ ] Documentation
   * [ ] Hardware
   * [ ] Software
 * [ ] Code refactoring
