@@ -25,3 +25,14 @@ TBD.
 ## Software
 
 TBD.
+
+## Roadmap
+
+Unordered list of features that should make it into the v1.0
+
+* [ ] **Documentation**
+  * [ ] Hardware
+  * [ ] Software
+* [ ] Code refactoring
+* [ ] MQTT Support
+* [ ] REST-API
