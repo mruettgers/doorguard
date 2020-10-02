@@ -20,6 +20,18 @@ That's what this is all about.
 
 ## Hardware
 
+### Wemos D1 Mini
+
+At the heart of the project is the microcontroller based on ESP8266. As in most of my projects, the Wemos D1 Mini is used here as well.
+
+### NFC-Shield
+
+I have tested some NFC shields in advance to make sure that the reader or any existing external antenna can be hidden behind the plaster without limiting the functionality.
+
+The [NFC-Shield 2.0 from Seeed](https://wiki.seeedstudio.com/NFC_Shield_V2.0/), which is also equipped with an external antenna, worked best. The small dimensions of the antenna made it easy to place it in a small, hollowed out gap behind the plaster.
+
+And fortunately, the circuit board of the NFC shield was build in such a way that the form factor could be minimized with the help of a Dremel so that it could easily be placed inside the case of the Doorbird.
+
 TBD.
 
 ## Software
