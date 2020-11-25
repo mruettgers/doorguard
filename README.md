@@ -16,6 +16,7 @@ Sorry Doorbird, but you can do better.
 After some research it turned out that modern, secure NFC-based access systems operate at 13,56 MHz and are often used together with Mifare DESfire tags, which offer both authentication and encryption between the tag and the NFC reader and that are considered as state of the art.
 
 Finding software with support for NFC and Mifare DESfire for the ESP8266 proved to be extremely difficult. But luckily I found the great project [DIY electronic RFID Door Lock with Battery Backup (2016)](https://www.codeproject.com/Articles/1096861/DIY-electronic-RFID-Door-Lock-with-Battery-Backup) by Elmü, which I started to port to the ESP8266.  
+Thanks to [step21](https://github.com/step21) the main work has already been done with porting the [library](https://github.com/step21/desfire_rfid) for Arduino.  
 That's what this is all about.
 
 ## Hardware
@@ -38,6 +39,10 @@ TBD.
 
 TBD.
 
+## Credits
+* [DIY electronic RFID Door Lock with Battery Backup (2016)](https://www.codeproject.com/Articles/1096861/DIY-electronic-RFID-Door-Lock-with-Battery-Backup) (The original project by Elmü on which this project is based on) 
+* [https://github.com/step21/desfire_rfid](https://github.com/step21/desfire_rfid) (Arduino port of the RFID library with DESFire support)
+
 ## Roadmap
 
 Unordered list of features that should make it into the v1.0
@@ -48,3 +53,9 @@ Unordered list of features that should make it into the v1.0
 * [ ] Code refactoring
 * [ ] MQTT Support
 * [ ] REST-API
+
+## License
+
+Distributed under the GPL v3 license.  
+See [LICENSE](LICENSE) for more information.
+
